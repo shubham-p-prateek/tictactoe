@@ -41,14 +41,10 @@ public class TicTacToe {
 
 
             int i, j;
-            try {
-                i = Integer.parseInt(coords[0].trim());
-                j = Integer.parseInt(coords[1].trim());
-            } catch (NumberFormatException e) {
-                System.out.println("Coordinates must be numbers.");
-                continue;
-            }
-            //CheckIfAlready occupied
+
+            i = Integer.parseInt(coords[0].trim());
+            j = Integer.parseInt(coords[1].trim());
+
             if (i > 2 || i < 0 || j > 2 || j < 0) {
                 System.out.println("Invalid value entered. Use row,col in within range 0-2");
                 continue;
@@ -58,7 +54,7 @@ public class TicTacToe {
                 continue;
             }
             tictac[i][j] = player1Tern ? selection : player2Selection;
-            if (winOrTie(tictac,currentPlayer)) {
+            if (winOrTie(tictac, currentPlayer)) {
                 return;
             }
 
