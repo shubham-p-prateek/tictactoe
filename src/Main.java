@@ -2,11 +2,11 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         playGame();
     }
 
-    public static void playGame() throws Exception {
+    public static void playGame() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter Player 1 Name");
         String player1 = scanner.nextLine();
