@@ -1,110 +1,199 @@
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class TicTacToe {
     public static void main(String[] args) {
-        playGame();
+        ConsoleInputProvider input = new ConsoleInputProvider();
+        Game game = new Game(input);
+        game.start();
+    }
+}
+
+class Game {
+    private final Board board;
+    private Player player1;
+    private Player player2;
+    private Player currentPlayer;
+    private final ConsoleInputProvider input;
+    private final WinChecker winChecker;
+
+    public Game(ConsoleInputProvider input) {
+        this.input = input;
+        this.board = new Board(3);
+        this.winChecker = new WinChecker();
+        initPlayers();
     }
 
-    public static void playGame() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter Player 1 Name");
-        String player1 = scanner.nextLine();
-        System.out.println("Enter Player 2 Name");
-        String player2 = scanner.nextLine();
+    private void initPlayers() {
+        System.out.println("Enter Player 1 Name:");
+        String p1 = input.getInput();
 
-        System.out.println("Select symbol for Player 1 \n Press 1 for 1 \n Press 2 for 2");
-        int selection = scanner.nextInt();
-        scanner.nextLine();
+        System.out.println("Enter Player 2 Name:");
+        String p2 = input.getInput();
 
-        if (selection != 1 && selection != 2) {
-            throw new IllegalArgumentException("Invalid Selection");
-        }
+        player1 = new Player(p1, Symbol.X);
+        player2 = new Player(p2, Symbol.O);
 
-        int player2Selection = selection == 1 ? 2 : 1;
+        currentPlayer = player1;
+    }
 
-        int count = 0;
-        int[][] tictac = new int[3][3];
+    public void start() {
+        while (!board.isFull()) {
+            board.print();
 
-        boolean player1Tern = true;
-        while (count < 9) {
-            String currentPlayer = player1Tern ? player1 : player2;
-            System.out.println("Enter " + currentPlayer + " Choice Coordinates");
+            System.out.println(currentPlayer.name() + " enter move (row,col):");
+            String move = input.getInput();
 
-            String input = scanner.nextLine();
-            String[] coords = input.split(",");
+            if (!processMove(move)) continue;
 
-            if (coords.length != 2) {
-                System.out.println("Invalid format. Use row,col");
-                continue;
-            }
-
-
-            int i, j;
-
-            i = Integer.parseInt(coords[0].trim());
-            j = Integer.parseInt(coords[1].trim());
-
-            if (i > 2 || i < 0 || j > 2 || j < 0) {
-                System.out.println("Invalid value entered. Use row,col in within range 0-2");
-                continue;
-            }
-            if (tictac[i][j] == 1 || tictac[i][j] == 2) {
-                System.out.println("Select Correct Coords");
-                continue;
-            }
-            tictac[i][j] = player1Tern ? selection : player2Selection;
-            if (winOrTie(tictac, currentPlayer)) {
+            if (winChecker.checkWin(board, currentPlayer.symbol())) {
+                board.print();
+                System.out.println(currentPlayer.name() + " wins!");
                 return;
             }
 
-            player1Tern = !player1Tern;
-            count++;
+            switchPlayer();
         }
 
-        System.out.println("Game Tie!!!");
-        scanner.close();
-
+        System.out.println("Game Tie!");
     }
 
-    public static boolean winOrTie(int[][] tic, String player) {
+    private boolean processMove(String inputStr) {
+        try {
+            String[] parts = inputStr.split(",");
+            int row = Integer.parseInt(parts[0].trim());
+            int col = Integer.parseInt(parts[1].trim());
 
-        for (int[] ints : tic) {
-            System.out.println(Arrays.toString(ints));
+            return board.place(row, col, currentPlayer.symbol());
+        } catch (Exception e) {
+            System.out.println("Invalid input. Use row,col");
+            return false;
         }
-        for (int i = 0; i < 3; i++) {
+    }
 
-            if (tic[i][0] != 0 && tic[i][1] != 0 && tic[i][2] != 0) {
-                if ((tic[i][0] == tic[i][1]) && (tic[i][1] == tic[i][2])) {
-                    System.out.println(player + " win");
-                    return true;
-                }
+    private void switchPlayer() {
+        currentPlayer = (currentPlayer == player1) ? player2 : player1;
+    }
+}
+
+class Board {
+    private final Symbol[][] grid;
+    private final int size;
+
+    public Board(int size) {
+        this.size = size;
+        grid = new Symbol[size][size];
+    }
+
+    public boolean place(int row, int col, Symbol symbol) {
+        if (!isValid(row, col)) {
+            System.out.println("Invalid move!");
+            return false;
+        }
+
+        grid[row][col] = symbol;
+        return true;
+    }
+
+    private boolean isValid(int row, int col) {
+        return row >= 0 && col >= 0 &&
+                row < size && col < size &&
+                grid[row][col] == null;
+    }
+
+    public Symbol[][] getGrid() {
+        return grid;
+    }
+
+    public boolean isFull() {
+        for (Symbol[] row : grid)
+            for (Symbol cell : row)
+                if (cell == null) return false;
+        return true;
+    }
+
+    public void print() {
+        for (Symbol[] row : grid) {
+            for (Symbol cell : row) {
+                System.out.print((cell == null ? "-" : cell) + " ");
             }
+            System.out.println();
         }
+    }
+}
 
+class WinChecker {
 
-        for (int j = 0; j < 3; j++) {
+    public boolean checkWin(Board board, Symbol symbol) {
+        Symbol[][] grid = board.getGrid();
+        int size = grid.length;
 
-            if (tic[0][j] != 0 && tic[1][j] != 0 && tic[2][j] != 0) {
-                if ((tic[0][j] == tic[1][j]) && (tic[1][j] == tic[2][j])) {
-                    System.out.println(player + " win");
-                    return true;
-                }
-            }
-        }
-
-        if (tic[0][0] != 0 && tic[1][1] != 0 && tic[2][2] != 0) {
-            if ((tic[0][0] == tic[1][1]) && (tic[1][1] == tic[2][2])) {
-                System.out.println(player + " win");
+        // Rows & Columns
+        for (int i = 0; i < size; i++) {
+            if (checkRow(grid, i, symbol) || checkCol(grid, i, symbol))
                 return true;
-            }
         }
-        if (tic[0][2] != 0 && tic[1][1] != 0 && tic[2][0] != 0) {
-            if ((tic[0][2] == tic[1][1]) && (tic[1][1] == tic[2][0])) {
-                System.out.println(player + " win");
-                return true;
-            }
+
+        // Diagonals
+        return checkMainDiagonal(grid, symbol) ||
+                checkAntiDiagonal(grid, symbol);
+    }
+
+    private boolean checkRow(Symbol[][] grid, int row, Symbol symbol) {
+        for (int col = 0; col < grid.length; col++) {
+            if (grid[row][col] != symbol) return false;
         }
-        return false;
+        return true;
+    }
+
+    private boolean checkCol(Symbol[][] grid, int col, Symbol symbol) {
+        for (Symbol[] symbols : grid) {
+            if (symbols[col] != symbol) return false;
+        }
+        return true;
+    }
+
+    private boolean checkMainDiagonal(Symbol[][] grid, Symbol symbol) {
+        for (int i = 0; i < grid.length; i++) {
+            if (grid[i][i] != symbol) return false;
+        }
+        return true;
+    }
+
+    private boolean checkAntiDiagonal(Symbol[][] grid, Symbol symbol) {
+        int size = grid.length;
+        for (int i = 0; i < size; i++) {
+            if (grid[i][size - i - 1] != symbol) return false;
+        }
+        return true;
+    }
+}
+
+class Player{
+    String name;
+    Symbol symbol;
+
+    public Player(String p1, Symbol symbol) {
+        name = p1;
+        this.symbol = symbol;
+    }
+
+    public Symbol symbol() {
+        return symbol;
+    }
+
+    public String name() {
+        return name;
+    }
+}
+
+enum Symbol {
+    X, O
+}
+
+class ConsoleInputProvider  {
+    private final Scanner scanner = new Scanner(System.in);
+
+    public String getInput() {
+        return scanner.nextLine();
     }
 }
